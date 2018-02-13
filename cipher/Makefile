@@ -4,8 +4,10 @@ INC += -I../
 INC += -I./
 
 SOURCES = $(foreach d,.,$(wildcard $(d)/*.c))
+SOURCES += $(foreach d,.,$(wildcard $(d)/*.cpp))
+SOURCES += $(foreach d,./aes,$(wildcard $(d)/*.cpp))
 OBJS = $(patsubst %.c, %.o, $(SOURCES))
-OBJS += md5key.o
+OBJS += $(patsubst %.cpp, %.o, $(SOURCES))
 
 CC += $(SHARED_FLAG)
 all : libcipher.a
