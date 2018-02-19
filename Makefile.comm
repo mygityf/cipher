@@ -1,8 +1,8 @@
 #CFLAGS = -DDEBUG_LOG -D_DEBUG
 #CFLAGS = -DDEBUG_LOG
-CFLAGS = -DLINUX
+CFLAGS = -DLINUX -O3
 
-CC=gcc -g -O3 $(CFLAGS)
+CC=gcc -g $(CFLAGS)
 CXX=gcc -std=c++11 -g $(CFLAGS)
 SHARED_FLAG = -fPIC -shared
 
