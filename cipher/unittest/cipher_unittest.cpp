@@ -20,6 +20,7 @@
 #include "cipher/hmac.h"
 #include "cipher/tdes.h"
 #include "cipher/rc4.h"
+#include "cipher/tea.h"
 #include "cipher/pbkdf2_hmac.h"
 #include "base/stringutils.h"
 #include "ut/test_harness.h"
@@ -249,6 +250,22 @@ TEST(RC4_Test, BasicTest) {
     EXPECT_EQ(string("5f0451cd55fa1229236b6a09792a7cdde91b9546c1948e8f45d3c7cb5c9e5bea7c5896e2c8f5c39c57b898"), hexBlk);
     RC4_Sample(key, 3, (unsigned char*)blk, 43);
     EXPECT_EQ(string("The quick brown fox jumps over the lazy dog"), string(blk));
+}
+
+TEST(TEA_Test, BasicTest) {
+    
+    unsigned char plain[] = "my plain";
+    unsigned char *key = (unsigned char *) "the secret key...";
+    unsigned char *iv = (unsigned char *) "01020304";
+    unsigned char crpypt[sizeof(plain) + (8 - (sizeof(plain) % 8))];
+    unsigned char decryptPlain[sizeof(plain)];
+
+    TeaEncryptCBC(crpypt, plain, sizeof(m), iv, key);
+    unsigned char outs[17] = {0x18,0xd9,0xd8,0x21,0x0a,0x60,0x72,0xe8,0x22,0x19,0x82,0xd2,0x60,0x5f,0xc2,0x22, 0x00};
+    EXPECT_EQ(0, memcmp(outs, crpypt, 16));
+    
+    EXPECT_EQ(0, TeaDecryptCBC(decryptPlain, crpypt, sizeof(crpypt), iv, key));
+    EXPECT_EQ(string(decryptPlain), string(plain));
 }
 
 TEST(PKCS5_PBKDF2_HMAC_Test, BasicTest) {
