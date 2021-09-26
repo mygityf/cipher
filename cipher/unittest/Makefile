@@ -10,7 +10,7 @@ LIB  = -lstdc++ -lpthread
 
 INC  = -I.
 INC += -I..
-INC += -I../../base
+INC += -I../..
 
 CPP_SRCS = $(foreach d,$(SRCS),$(wildcard $(d)/*.cpp))
 C_SRCS   = $(foreach d,$(SRCS),$(wildcard $(d)/*.c))
