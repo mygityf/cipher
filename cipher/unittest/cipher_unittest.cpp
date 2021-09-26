@@ -253,19 +253,20 @@ TEST(RC4_Test, BasicTest) {
 }
 
 TEST(TEA_Test, BasicTest) {
-    
+
     unsigned char plain[] = "my plain";
+    int plain_len = 8;
     unsigned char *key = (unsigned char *) "the secret key...";
     unsigned char *iv = (unsigned char *) "01020304";
-    unsigned char crpypt[sizeof(plain) + (8 - (sizeof(plain) % 8))];
-    unsigned char decryptPlain[sizeof(plain)];
+    unsigned char crpypt[8];
+    unsigned char decryptPlain[8+1];
 
-    TeaEncryptCBC(crpypt, plain, sizeof(m), iv, key);
+    TeaEncryptCBC(crpypt, plain, 8, iv, key);
     unsigned char outs[17] = {0x18,0xd9,0xd8,0x21,0x0a,0x60,0x72,0xe8,0x22,0x19,0x82,0xd2,0x60,0x5f,0xc2,0x22, 0x00};
     EXPECT_EQ(0, memcmp(outs, crpypt, 16));
-    
-    EXPECT_EQ(0, TeaDecryptCBC(decryptPlain, crpypt, sizeof(crpypt), iv, key));
-    EXPECT_EQ(string(decryptPlain), string(plain));
+
+    EXPECT_EQ(0, TeaDecryptCBC(decryptPlain, crpypt, strlen((char *)crpypt), iv, key));
+    EXPECT_EQ(string((char *)decryptPlain), string((char *)plain));
 }
 
 TEST(PKCS5_PBKDF2_HMAC_Test, BasicTest) {
