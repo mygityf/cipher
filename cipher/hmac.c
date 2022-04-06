@@ -15,7 +15,6 @@ int             key_len;             length of authentication key
 unsigned char*  digest;              caller digest to be filled in
 */
 #define KEY_IOPAD_SIZE 64
-#define KEY_IOPAD_SIZE128 128
 void hmac_md5(unsigned char *key, int key_len,
     unsigned char *text, int text_len, unsigned char *hmac)
 {
@@ -39,8 +38,16 @@ void hmac_md5(unsigned char *key, int key_len,
     /* start out by storing key in pads */
     memset( k_ipad, 0, sizeof(k_ipad));
     memset( k_opad, 0, sizeof(k_opad));
-    memcpy( k_ipad, key, key_len);
-    memcpy( k_opad, key, key_len);
+    if(key_len <= KEY_IOPAD_SIZE)
+    {
+        memcpy( k_ipad, key, key_len);
+        memcpy( k_opad, key, key_len);
+    }
+    else
+    {
+        MD5Calc(key, key_len, k_ipad);
+        memcpy(k_opad, k_ipad, KEY_IOPAD_SIZE);
+    }
     
     /* XOR key with ipad and opad values */
     for (i = 0; i < KEY_IOPAD_SIZE; i++) {
@@ -71,8 +78,16 @@ void hmac_sha1(unsigned char *key, int key_len,
     /* start out by storing key in pads */
     memset(k_ipad, 0, sizeof(k_ipad));
     memset(k_opad, 0, sizeof(k_opad));
-    memcpy(k_ipad, key, key_len);
-    memcpy(k_opad, key, key_len);
+    if(key_len <= KEY_IOPAD_SIZE)
+    {
+        memcpy( k_ipad, key, key_len);
+        memcpy( k_opad, key, key_len);
+    }
+    else
+    {
+        SHA1Calc(key, key_len, k_ipad);
+        memcpy(k_opad, k_ipad, KEY_IOPAD_SIZE);
+    }
 
     /* XOR key with ipad and opad values */
     for (i = 0; i < KEY_IOPAD_SIZE; i++) {
@@ -103,8 +118,16 @@ void hmac_sha224(unsigned char *key, int key_len,
     /* start out by storing key in pads */
     memset(k_ipad, 0, sizeof(k_ipad));
     memset(k_opad, 0, sizeof(k_opad));
-    memcpy(k_ipad, key, key_len);
-    memcpy(k_opad, key, key_len);
+    if(key_len <= KEY_IOPAD_SIZE)
+    {
+        memcpy( k_ipad, key, key_len);
+        memcpy( k_opad, key, key_len);
+    }
+    else
+    {
+        SHA224_Simple(key, key_len, k_ipad);
+        memcpy(k_opad, k_ipad, KEY_IOPAD_SIZE);
+    }
 
     /* XOR key with ipad and opad values */
     for (i = 0; i < KEY_IOPAD_SIZE; i++) {
@@ -134,8 +157,16 @@ void hmac_sha256(unsigned char *key, int key_len,
     /* start out by storing key in pads */
     memset(k_ipad, 0, sizeof(k_ipad));
     memset(k_opad, 0, sizeof(k_opad));
-    memcpy(k_ipad, key, key_len);
-    memcpy(k_opad, key, key_len);
+    if(key_len <= KEY_IOPAD_SIZE)
+    {
+        memcpy( k_ipad, key, key_len);
+        memcpy( k_opad, key, key_len);
+    }
+    else
+    {
+        SHA256_Simple(key, key_len, k_ipad);
+        memcpy(k_opad, k_ipad, KEY_IOPAD_SIZE);
+    }
 
     /* XOR key with ipad and opad values */
     for (i = 0; i < KEY_IOPAD_SIZE; i++) {
@@ -155,65 +186,84 @@ void hmac_sha256(unsigned char *key, int key_len,
     SHA256_Bytes(&context, hmac, SHA256_DIGEST_SIZE);     /* then results of 1st hash */
     SHA256_Final(&context, hmac);          /* finish up 2nd pass */
 }
+
+#undef KEY_IOPAD_SIZE
+#define KEY_IOPAD_SIZE 128
 void hmac_sha384(unsigned char *key, int key_len,
     unsigned char *text, int text_len, unsigned char *hmac) {
     SHA512_State context;
-    unsigned char k_ipad[KEY_IOPAD_SIZE128];    /* inner padding - key XORd with ipad  */
-    unsigned char k_opad[KEY_IOPAD_SIZE128];    /* outer padding - key XORd with opad */
+    unsigned char k_ipad[KEY_IOPAD_SIZE];    /* inner padding - key XORd with ipad  */
+    unsigned char k_opad[KEY_IOPAD_SIZE];    /* outer padding - key XORd with opad */
     int i;
 
     /* start out by storing key in pads */
     memset(k_ipad, 0, sizeof(k_ipad));
     memset(k_opad, 0, sizeof(k_opad));
-    memcpy(k_ipad, key, key_len);
-    memcpy(k_opad, key, key_len);
+    if(key_len <= KEY_IOPAD_SIZE)
+    {
+        memcpy( k_ipad, key, key_len);
+        memcpy( k_opad, key, key_len);
+    }
+    else
+    {
+        SHA384_Simple(key, key_len, k_ipad);
+        memcpy(k_opad, k_ipad, KEY_IOPAD_SIZE);
+    }
 
     /* XOR key with ipad and opad values */
-    for (i = 0; i < KEY_IOPAD_SIZE128; i++) {
+    for (i = 0; i < KEY_IOPAD_SIZE; i++) {
         k_ipad[i] ^= 0x36;
         k_opad[i] ^= 0x5c;
     }
 
     // perform inner SHA384
     SHA384_Init(&context);                    /* init context for 1st pass */
-    SHA384_Bytes(&context, k_ipad, KEY_IOPAD_SIZE128);      /* start with inner pad */
+    SHA384_Bytes(&context, k_ipad, KEY_IOPAD_SIZE);      /* start with inner pad */
     SHA384_Bytes(&context, text, text_len); /* then text of datagram */
     SHA384_Final(&context, hmac);             /* finish up 1st pass */
 
     // perform outer SHA384
     SHA384_Init(&context);                   /* init context for 2nd pass */
-    SHA384_Bytes(&context, k_opad, KEY_IOPAD_SIZE128);     /* start with outer pad */
+    SHA384_Bytes(&context, k_opad, KEY_IOPAD_SIZE);     /* start with outer pad */
     SHA384_Bytes(&context, hmac, SHA384_DIGEST_SIZE);     /* then results of 1st hash */
     SHA384_Final(&context, hmac);          /* finish up 2nd pass */
 }
 void hmac_sha512(unsigned char *key, int key_len,
     unsigned char *text, int text_len, unsigned char *hmac) {
     SHA512_State context;
-    unsigned char k_ipad[KEY_IOPAD_SIZE128];    /* inner padding - key XORd with ipad  */
-    unsigned char k_opad[KEY_IOPAD_SIZE128];    /* outer padding - key XORd with opad */
+    unsigned char k_ipad[KEY_IOPAD_SIZE];    /* inner padding - key XORd with ipad  */
+    unsigned char k_opad[KEY_IOPAD_SIZE];    /* outer padding - key XORd with opad */
     int i;
 
     /* start out by storing key in pads */
     memset(k_ipad, 0, sizeof(k_ipad));
     memset(k_opad, 0, sizeof(k_opad));
-    memcpy(k_ipad, key, key_len);
-    memcpy(k_opad, key, key_len);
+    if(key_len <= KEY_IOPAD_SIZE)
+    {
+        memcpy( k_ipad, key, key_len);
+        memcpy( k_opad, key, key_len);
+    }
+    else
+    {
+        SHA512_Simple(key, key_len, k_ipad);
+        memcpy(k_opad, k_ipad, KEY_IOPAD_SIZE);
+    }
 
     /* XOR key with ipad and opad values */
-    for (i = 0; i < KEY_IOPAD_SIZE128; i++) {
+    for (i = 0; i < KEY_IOPAD_SIZE; i++) {
         k_ipad[i] ^= 0x36;
         k_opad[i] ^= 0x5c;
     }
 
     // perform inner SHA512
     SHA512_Init(&context);                    /* init context for 1st pass */
-    SHA512_Bytes(&context, k_ipad, KEY_IOPAD_SIZE128);      /* start with inner pad */
+    SHA512_Bytes(&context, k_ipad, KEY_IOPAD_SIZE);      /* start with inner pad */
     SHA512_Bytes(&context, text, text_len); /* then text of datagram */
     SHA512_Final(&context, hmac);             /* fnish up 1st pass */
 
     // perform outer SHA512
     SHA512_Init(&context);                   /* init context for 2nd pass */
-    SHA512_Bytes(&context, k_opad, KEY_IOPAD_SIZE128);     /* start with outer pad */
+    SHA512_Bytes(&context, k_opad, KEY_IOPAD_SIZE);     /* start with outer pad */
     SHA512_Bytes(&context, hmac, SHA512_DIGEST_SIZE);     /* then results of 1st hash */
     SHA512_Final(&context, hmac);          /* finish up 2nd pass */
 }
